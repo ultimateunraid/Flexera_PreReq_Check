@@ -208,13 +208,174 @@ function Install-DotNetFramework48 {
     }
 }
 
+# Function to extract CRL URLs from a certificate
+function Get-CrlUrlsFromCertificate {
+    param(
+        [System.Security.Cryptography.X509Certificates.X509Certificate2]$Certificate
+    )
+
+    $crlUrls = @()
+
+    try {
+        # Look for CRL Distribution Points extension (OID 2.5.29.31)
+        $crlExtension = $Certificate.Extensions | Where-Object { $_.Oid.Value -eq "2.5.29.31" }
+
+        if ($crlExtension) {
+            $asnData = $crlExtension.Format($false)
+
+            # Parse URLs from the extension data
+            # CRL URLs typically start with "http://" or "https://"
+            $urlPattern = 'https?://[^\s,\)]+'
+            $matches = [regex]::Matches($asnData, $urlPattern)
+
+            foreach ($match in $matches) {
+                $url = $match.Value.Trim()
+                if ($url -and $url -notlike "*`n*") {
+                    $crlUrls += $url
+                }
+            }
+        }
+    }
+    catch {
+        Write-Info "Could not parse CRL extension from certificate: $($Certificate.Subject)"
+    }
+
+    return $crlUrls
+}
+
+# Function to get SSL certificate chain from a URL
+function Get-SslCertificateChain {
+    param(
+        [string]$Hostname
+    )
+
+    $certificates = @()
+
+    try {
+        # Create TCP connection
+        $tcpClient = New-Object System.Net.Sockets.TcpClient
+        $tcpClient.Connect($Hostname, 443)
+
+        # Create SSL stream
+        $sslStream = New-Object System.Net.Security.SslStream(
+            $tcpClient.GetStream(),
+            $false,
+            { param($sender, $certificate, $chain, $sslPolicyErrors) return $true }
+        )
+
+        # Authenticate and retrieve certificate
+        $sslStream.AuthenticateAsClient($Hostname)
+
+        # Get the remote certificate
+        $remoteCert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2($sslStream.RemoteCertificate)
+        $certificates += $remoteCert
+
+        # Build certificate chain to get all certificates
+        $chain = New-Object System.Security.Cryptography.X509Certificates.X509Chain
+        $chain.Build($remoteCert) | Out-Null
+
+        foreach ($chainElement in $chain.ChainElements) {
+            if ($chainElement.Certificate.Thumbprint -ne $remoteCert.Thumbprint) {
+                $certificates += $chainElement.Certificate
+            }
+        }
+
+        # Clean up
+        $sslStream.Close()
+        $tcpClient.Close()
+    }
+    catch {
+        Write-Info "Could not retrieve certificate from ${Hostname}: $_"
+    }
+
+    return $certificates
+}
+
+# Function to discover CRL URLs from Flexera services
+function Get-DiscoveredCrlUrls {
+    Write-Host "`n========================================" -ForegroundColor Cyan
+    Write-Host "Discovering CRL URLs from Certificates" -ForegroundColor Cyan
+    Write-Host "========================================" -ForegroundColor Cyan
+
+    # URLs to probe for certificates
+    $flexeraUrls = @(
+        "app.flexera.com",
+        "login.flexera.com",
+        "secure.flexera.com",
+        "api.flexera.com",
+        "beacon.flexnetmanager.com",
+        "data.flexnetmanager.com"
+    )
+
+    # Allowed CRL domains
+    $allowedDomains = @(
+        "*.amazontrust.com",
+        "*.digicert.com",
+        "*.lencr.org"
+    )
+
+    $discoveredCrls = @{}
+
+    foreach ($url in $flexeraUrls) {
+        Write-Info "Retrieving certificate from: $url"
+
+        $certificates = Get-SslCertificateChain -Hostname $url
+
+        foreach ($cert in $certificates) {
+            $crlUrls = Get-CrlUrlsFromCertificate -Certificate $cert
+
+            foreach ($crlUrl in $crlUrls) {
+                # Parse URL to get hostname
+                try {
+                    $uri = [System.Uri]$crlUrl
+                    $hostname = $uri.Host
+
+                    # Check if hostname matches allowed domains
+                    $isAllowed = $false
+                    foreach ($allowedPattern in $allowedDomains) {
+                        $pattern = $allowedPattern.Replace("*.", "").Replace(".", "\.")
+                        if ($hostname -match $pattern) {
+                            $isAllowed = $true
+                            break
+                        }
+                    }
+
+                    if ($isAllowed) {
+                        $path = $uri.PathAndQuery
+                        $key = "${hostname}${path}"
+
+                        if (-not $discoveredCrls.ContainsKey($key)) {
+                            $discoveredCrls[$key] = @{
+                                Hostname = $hostname
+                                Path = $path
+                                FullUrl = $crlUrl
+                            }
+                            Write-Success "Discovered CRL: $crlUrl"
+                        }
+                    }
+                }
+                catch {
+                    Write-Info "Could not parse CRL URL: $crlUrl"
+                }
+            }
+        }
+    }
+
+    Write-Host "`nTotal unique CRL URLs discovered: $($discoveredCrls.Count)" -ForegroundColor Cyan
+
+    return $discoveredCrls
+}
+
 # Function to test URL connectivity
 function Test-UrlConnectivity {
     Write-Host "`n========================================" -ForegroundColor Cyan
     Write-Host "Checking URL Connectivity" -ForegroundColor Cyan
     Write-Host "========================================" -ForegroundColor Cyan
 
-    # Define all URLs with their categories
+    # Discover CRL URLs from live certificates
+    $discoveredCrls = Get-DiscoveredCrlUrls
+
+    # Define hardcoded URLs with their categories
     $urlList = @(
         # Flexera One US
         @{ Hostname = "app.flexera.com"; Required = $false; Category = "Flexera"; Region = "US" },
@@ -240,7 +401,7 @@ function Test-UrlConnectivity {
         @{ Hostname = "beacon.flexnetmanager.au"; Required = $false; Category = "Flexera"; Region = "APAC" },
         @{ Hostname = "data.flexnetmanager.au"; Required = $false; Category = "Flexera"; Region = "APAC" },
 
-        # Certificate Revocation and OCSP
+        # Certificate Revocation and OCSP (Hardcoded)
         @{ Hostname = "crl.r2m02.amazontrust.com"; Path = "/r2m02.crl"; Required = $true; Category = "Certificate"; Region = "N/A" },
         @{ Hostname = "crl.sca1b.amazontrust.com"; Path = "/sca1b.crl"; Required = $true; Category = "Certificate"; Region = "N/A" },
         @{ Hostname = "crt.sca1b.amazontrust.com"; Path = "/sca1b.crt"; Required = $true; Category = "Certificate"; Region = "N/A" },
@@ -251,6 +412,43 @@ function Test-UrlConnectivity {
         @{ Hostname = "crl4.digicert.com"; Path = "/DigiCertGlobalRootCA.crl"; Required = $true; Category = "Certificate"; Region = "N/A" },
         @{ Hostname = "x1.c.lencr.org"; Path = $null; Required = $true; Category = "Certificate"; Region = "N/A" }
     )
+
+    # Track hardcoded CRLs to avoid duplicates
+    $existingCrls = @{}
+    foreach ($urlInfo in $urlList) {
+        if ($urlInfo.Category -eq "Certificate") {
+            $path = if ($urlInfo.Path) { $urlInfo.Path } else { "" }
+            $key = "$($urlInfo.Hostname)${path}"
+            $existingCrls[$key] = $true
+        }
+    }
+
+    # Add discovered CRLs that are not in the hardcoded list
+    Write-Host "`n----------------------------------------" -ForegroundColor Cyan
+    Write-Host "Adding Discovered CRLs to Test List" -ForegroundColor Cyan
+    Write-Host "----------------------------------------" -ForegroundColor Cyan
+
+    $addedCount = 0
+    foreach ($key in $discoveredCrls.Keys) {
+        if (-not $existingCrls.ContainsKey($key)) {
+            $crlInfo = $discoveredCrls[$key]
+            $urlList += @{
+                Hostname = $crlInfo.Hostname
+                Path = $crlInfo.Path
+                Required = $true
+                Category = "Certificate"
+                Region = "N/A"
+            }
+            Write-Info "Added: $($crlInfo.FullUrl)"
+            $addedCount++
+        }
+    }
+
+    if ($addedCount -eq 0) {
+        Write-Info "No new CRL URLs to add (all discovered CRLs already in hardcoded list)"
+    } else {
+        Write-Success "Added $addedCount new CRL URL(s) from certificate discovery"
+    }
 
     $requiredUrlsOk = $true
     $flexeraRegions = @{
