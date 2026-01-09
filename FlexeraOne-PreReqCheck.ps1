@@ -539,6 +539,46 @@ function Test-UrlConnectivity {
         $requiredUrlsOk = $false
     }
 
+    # Display CRL Summary
+    Write-Host "`n----------------------------------------" -ForegroundColor Cyan
+    Write-Host "CRL URLs Being Tested" -ForegroundColor Cyan
+    Write-Host "----------------------------------------" -ForegroundColor Cyan
+
+    # Collect and categorize CRL URLs
+    $hardcodedCrls = @()
+    $discoveredCrlsList = @()
+
+    foreach ($urlInfo in $urlList) {
+        if ($urlInfo.Category -eq "Certificate") {
+            $path = if ($urlInfo.Path) { $urlInfo.Path } else { "" }
+            $key = "$($urlInfo.Hostname)${path}"
+            $fullUrl = "http://$($urlInfo.Hostname)$path"
+
+            # Check if this is a discovered CRL or hardcoded
+            # If it's in existingCrls, it was hardcoded; otherwise it was discovered and added
+            if ($existingCrls.ContainsKey($key)) {
+                $hardcodedCrls += $fullUrl
+            } else {
+                $discoveredCrlsList += $fullUrl
+            }
+        }
+    }
+
+    Write-Host "`nHardcoded CRLs ($($hardcodedCrls.Count)):" -ForegroundColor Yellow
+    foreach ($url in $hardcodedCrls | Sort-Object) {
+        Write-Host "  - $url" -ForegroundColor Gray
+    }
+
+    if ($discoveredCrlsList.Count -gt 0) {
+        Write-Host "`nDiscovered CRLs ($($discoveredCrlsList.Count)):" -ForegroundColor Yellow
+        foreach ($url in $discoveredCrlsList | Sort-Object) {
+            Write-Host "  - $url" -ForegroundColor Green
+        }
+    } else {
+        Write-Host "`nDiscovered CRLs (0):" -ForegroundColor Yellow
+        Write-Host "  (All discovered CRLs were already in hardcoded list)" -ForegroundColor Gray
+    }
+
     Write-Host "`n" -NoNewline
 
     if ($requiredUrlsOk) {
