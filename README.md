@@ -37,3 +37,5 @@ Run the script with administrator privileges:
 ```powershell
 .\FlexeraOne-PreReqCheck.ps1
 ```
+
+> **Execution Policy**: If the current session's effective execution policy would block the script from running (`Restricted` or `AllSigned`), the script will detect this automatically and prompt you to set the policy to `Unrestricted` for the current session only. No system-wide changes are made.

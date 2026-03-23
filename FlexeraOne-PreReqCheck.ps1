@@ -14,6 +14,27 @@
 
 #Requires -RunAsAdministrator
 
+# ── Execution Policy Check ────────────────────────────────────────────────────
+# Sets Bypass for this process only — no permanent changes to the system.
+$_effectivePolicy = Get-ExecutionPolicy -Scope Process
+if ($_effectivePolicy -eq 'Undefined') { $_effectivePolicy = Get-ExecutionPolicy }
+if ($_effectivePolicy -ne 'Bypass' -and $_effectivePolicy -ne 'Unrestricted') {
+    Write-Host ''
+    Write-Host "[!] Execution policy is '$_effectivePolicy'." -ForegroundColor Yellow
+    Write-Host '    This script requires Bypass to run without interruption.' -ForegroundColor Yellow
+    Write-Host '    This only applies to the current session — no permanent changes.' -ForegroundColor Yellow
+    $response = Read-Host '    Set ExecutionPolicy to Unrestricted for this session? [Y/N]'
+    if ($response -match '^[Yy]') {
+        Set-ExecutionPolicy -Scope Process -ExecutionPolicy Unrestricted -Force
+        Write-Host '[OK] Execution policy set to Unrestricted for this session.' -ForegroundColor Green
+        Write-Host ''
+    } else {
+        Write-Host '[!] Execution policy not changed. Script may fail on unsigned content.' -ForegroundColor Yellow
+        Write-Host ''
+    }
+}
+# ─────────────────────────────────────────────────────────────────────────────
+
 # TLS versions to validate
 $RequiredTlsVersions = @("Tls12")
 $OptionalTlsVersions = @()
