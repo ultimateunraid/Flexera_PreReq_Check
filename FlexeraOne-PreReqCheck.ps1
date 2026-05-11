@@ -370,9 +370,8 @@ function Test-UrlConnectivity {
         @{ Hostname = "crl3.digicert.com";                Path = "/DigiCertGlobalRootCA.crl"; Required = $true; Category = "Certificate"; Region = "N/A" },
         @{ Hostname = "crl4.digicert.com";                Path = "/DigiCertGlobalRootCA.crl"; Required = $true; Category = "Certificate"; Region = "N/A" },
 
-        # ── Certificate Revocation List (CRL) and OCSP — Let's Encrypt ──────
-        @{ Hostname = "x1.c.lencr.org";                   Path = $null;                      Required = $true; Category = "Certificate"; Region = "N/A" },
-        @{ Hostname = "r3.o.lencr.org";                   Path = $null;                      Required = $true; Category = "Certificate"; Region = "N/A" }
+        # ── Certificate Revocation List (CRL) — Let's Encrypt ───────────────
+        @{ Hostname = "x1.c.lencr.org";                   Path = $null;                      Required = $true; Category = "Certificate"; Region = "N/A" }
     )
 
     $requiredUrlsOk = $true
