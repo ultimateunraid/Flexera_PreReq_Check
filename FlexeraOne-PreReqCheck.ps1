@@ -316,57 +316,80 @@ function Test-UrlConnectivity {
     Write-Host "Checking URL Connectivity" -ForegroundColor Cyan
     Write-Host "========================================" -ForegroundColor Cyan
 
+    # Category values: "Prod", "UAT", "Certificate", "Monitoring"
     $urlList = @(
-        # Flexera One US
-        @{ Hostname = "app.flexera.com";             Path = $null; Required = $false; Category = "Flexera"; Region = "US"  },
-        @{ Hostname = "api.flexera.com";             Path = $null; Required = $false; Category = "Flexera"; Region = "US"  },
-        @{ Hostname = "login.flexera.com";           Path = $null; Required = $false; Category = "Flexera"; Region = "US"  },
-        @{ Hostname = "secure.flexera.com";          Path = $null; Required = $false; Category = "Flexera"; Region = "US"  },
-        @{ Hostname = "beacon.flexnetmanager.com";   Path = $null; Required = $false; Category = "Flexera"; Region = "US"  },
-        @{ Hostname = "data.flexnetmanager.com";     Path = $null; Required = $false; Category = "Flexera"; Region = "US"  },
+        # ── Production — Flexera One US ──────────────────────────────────────
+        @{ Hostname = "app.flexera.com";                  Path = $null; Required = $false; Category = "Prod"; Region = "US"   },
+        @{ Hostname = "api.flexera.com";                  Path = $null; Required = $false; Category = "Prod"; Region = "US"   },
+        @{ Hostname = "login.flexera.com";                Path = $null; Required = $false; Category = "Prod"; Region = "US"   },
+        @{ Hostname = "secure.flexera.com";               Path = $null; Required = $false; Category = "Prod"; Region = "US"   },
+        @{ Hostname = "beacon.flexnetmanager.com";        Path = $null; Required = $false; Category = "Prod"; Region = "US"   },
+        @{ Hostname = "data.flexnetmanager.com";          Path = $null; Required = $false; Category = "Prod"; Region = "US"   },
 
-        # Flexera One EU
-        @{ Hostname = "app.flexera.eu";              Path = $null; Required = $false; Category = "Flexera"; Region = "EU"  },
-        @{ Hostname = "api.flexera.eu";              Path = $null; Required = $false; Category = "Flexera"; Region = "EU"  },
-        @{ Hostname = "login.flexera.eu";            Path = $null; Required = $false; Category = "Flexera"; Region = "EU"  },
-        @{ Hostname = "secure.flexera.eu";           Path = $null; Required = $false; Category = "Flexera"; Region = "EU"  },
-        @{ Hostname = "beacon.flexnetmanager.eu";    Path = $null; Required = $false; Category = "Flexera"; Region = "EU"  },
-        @{ Hostname = "data.flexnetmanager.eu";      Path = $null; Required = $false; Category = "Flexera"; Region = "EU"  },
+        # ── Production — Flexera One EU ──────────────────────────────────────
+        @{ Hostname = "app.flexera.eu";                   Path = $null; Required = $false; Category = "Prod"; Region = "EU"   },
+        @{ Hostname = "api.flexera.eu";                   Path = $null; Required = $false; Category = "Prod"; Region = "EU"   },
+        @{ Hostname = "login.flexera.eu";                 Path = $null; Required = $false; Category = "Prod"; Region = "EU"   },
+        @{ Hostname = "secure.flexera.eu";                Path = $null; Required = $false; Category = "Prod"; Region = "EU"   },
+        @{ Hostname = "beacon.flexnetmanager.eu";         Path = $null; Required = $false; Category = "Prod"; Region = "EU"   },
+        @{ Hostname = "data.flexnetmanager.eu";           Path = $null; Required = $false; Category = "Prod"; Region = "EU"   },
 
-        # Flexera One APAC
-        @{ Hostname = "app.flexera.au";              Path = $null; Required = $false; Category = "Flexera"; Region = "APAC" },
-        @{ Hostname = "api.flexera.au";              Path = $null; Required = $false; Category = "Flexera"; Region = "APAC" },
-        @{ Hostname = "login.flexera.au";            Path = $null; Required = $false; Category = "Flexera"; Region = "APAC" },
-        @{ Hostname = "secure.flexera.au";           Path = $null; Required = $false; Category = "Flexera"; Region = "APAC" },
-        @{ Hostname = "beacon.flexnetmanager.au";    Path = $null; Required = $false; Category = "Flexera"; Region = "APAC" },
-        @{ Hostname = "data.flexnetmanager.au";      Path = $null; Required = $false; Category = "Flexera"; Region = "APAC" },
+        # ── Production — Flexera One APAC ────────────────────────────────────
+        @{ Hostname = "app.flexera.au";                   Path = $null; Required = $false; Category = "Prod"; Region = "APAC" },
+        @{ Hostname = "api.flexera.au";                   Path = $null; Required = $false; Category = "Prod"; Region = "APAC" },
+        @{ Hostname = "login.flexera.au";                 Path = $null; Required = $false; Category = "Prod"; Region = "APAC" },
+        @{ Hostname = "secure.flexera.au";                Path = $null; Required = $false; Category = "Prod"; Region = "APAC" },
+        @{ Hostname = "beacon.flexnetmanager.au";         Path = $null; Required = $false; Category = "Prod"; Region = "APAC" },
+        @{ Hostname = "data.flexnetmanager.au";           Path = $null; Required = $false; Category = "Prod"; Region = "APAC" },
 
-        # Certificate Revocation Lists (CRL) and OCSP — Amazon Trust
-        @{ Hostname = "crl.r2m02.amazontrust.com";  Path = "/r2m02.crl";              Required = $true; Category = "Certificate"; Region = "N/A" },
-        @{ Hostname = "crl.sca1b.amazontrust.com";  Path = "/sca1b.crl";              Required = $true; Category = "Certificate"; Region = "N/A" },
-        @{ Hostname = "crt.sca1b.amazontrust.com";  Path = "/sca1b.crt";              Required = $true; Category = "Certificate"; Region = "N/A" },
-        @{ Hostname = "ocsp.sca1b.amazontrust.com"; Path = $null;                     Required = $true; Category = "Certificate"; Region = "N/A" },
+        # ── UAT — Flexera One US ─────────────────────────────────────────────
+        @{ Hostname = "beacon.uat.flexnetmanager.com";    Path = $null; Required = $false; Category = "UAT";  Region = "US"   },
+        @{ Hostname = "data.uat.flexnetmanager.com";      Path = $null; Required = $false; Category = "UAT";  Region = "US"   },
 
-        # Certificate Revocation Lists (CRL) — DigiCert
-        @{ Hostname = "crl3.digicert.com";          Path = "/ssca-sha2-g6.crl";       Required = $true; Category = "Certificate"; Region = "N/A" },
-        @{ Hostname = "crl4.digicert.com";          Path = "/ssca-sha2-g6.crl";       Required = $true; Category = "Certificate"; Region = "N/A" },
-        @{ Hostname = "crl3.digicert.com";          Path = "/DigiCertGlobalRootCA.crl"; Required = $true; Category = "Certificate"; Region = "N/A" },
-        @{ Hostname = "crl4.digicert.com";          Path = "/DigiCertGlobalRootCA.crl"; Required = $true; Category = "Certificate"; Region = "N/A" },
+        # ── UAT — Flexera One EU ─────────────────────────────────────────────
+        @{ Hostname = "beacon.uat.flexnetmanager.eu";     Path = $null; Required = $false; Category = "UAT";  Region = "EU"   },
+        @{ Hostname = "data.uat.flexnetmanager.eu";       Path = $null; Required = $false; Category = "UAT";  Region = "EU"   },
 
-        # Certificate Revocation List (CRL) and OCSP — Let's Encrypt
-        @{ Hostname = "x1.c.lencr.org";             Path = $null;                     Required = $true; Category = "Certificate"; Region = "N/A" },
-        @{ Hostname = "r3.o.lencr.org";             Path = $null;                     Required = $true; Category = "Certificate"; Region = "N/A" }
+        # ── UAT — Flexera One APAC ───────────────────────────────────────────
+        @{ Hostname = "beacon.uat.flexnetmanager.au";     Path = $null; Required = $false; Category = "UAT";  Region = "APAC" },
+        @{ Hostname = "data.uat.flexnetmanager.au";       Path = $null; Required = $false; Category = "UAT";  Region = "APAC" },
+
+        # ── Performance Monitoring ───────────────────────────────────────────
+        @{ Hostname = "js-agent.newrelic.com";            Path = $null; Required = $false; Category = "Monitoring"; Region = "N/A" },
+        @{ Hostname = "bam.nr-data.net";                  Path = $null; Required = $false; Category = "Monitoring"; Region = "N/A" },
+
+        # ── Certificate Revocation Lists (CRL) and OCSP — Amazon Trust ──────
+        @{ Hostname = "crl.r2m02.amazontrust.com";        Path = "/r2m02.crl";               Required = $true; Category = "Certificate"; Region = "N/A" },
+        @{ Hostname = "crl.sca1b.amazontrust.com";        Path = "/sca1b.crl";               Required = $true; Category = "Certificate"; Region = "N/A" },
+        @{ Hostname = "crt.sca1b.amazontrust.com";        Path = "/sca1b.crt";               Required = $true; Category = "Certificate"; Region = "N/A" },
+        @{ Hostname = "ocsp.sca1b.amazontrust.com";       Path = $null;                      Required = $true; Category = "Certificate"; Region = "N/A" },
+
+        # ── Certificate Revocation Lists (CRL) — DigiCert ───────────────────
+        @{ Hostname = "crl3.digicert.com";                Path = "/ssca-sha2-g6.crl";        Required = $true; Category = "Certificate"; Region = "N/A" },
+        @{ Hostname = "crl4.digicert.com";                Path = "/ssca-sha2-g6.crl";        Required = $true; Category = "Certificate"; Region = "N/A" },
+        @{ Hostname = "crl3.digicert.com";                Path = "/DigiCertGlobalRootCA.crl"; Required = $true; Category = "Certificate"; Region = "N/A" },
+        @{ Hostname = "crl4.digicert.com";                Path = "/DigiCertGlobalRootCA.crl"; Required = $true; Category = "Certificate"; Region = "N/A" },
+
+        # ── Certificate Revocation List (CRL) and OCSP — Let's Encrypt ──────
+        @{ Hostname = "x1.c.lencr.org";                   Path = $null;                      Required = $true; Category = "Certificate"; Region = "N/A" },
+        @{ Hostname = "r3.o.lencr.org";                   Path = $null;                      Required = $true; Category = "Certificate"; Region = "N/A" }
     )
 
     $requiredUrlsOk = $true
     $failedUrls     = @()
 
-    $flexeraRegions = @{
+    $prodRegions = @{
+        "US"   = @{ Total = 0; Success = 0 }
+        "EU"   = @{ Total = 0; Success = 0 }
+        "APAC" = @{ Total = 0; Success = 0 }
+    }
+    $uatRegions = @{
         "US"   = @{ Total = 0; Success = 0 }
         "EU"   = @{ Total = 0; Success = 0 }
         "APAC" = @{ Total = 0; Success = 0 }
     }
     $certificateStatus = @{ Total = 0; Success = 0 }
+    $monitoringStatus  = @{ Total = 0; Success = 0 }
 
     foreach ($urlInfo in $urlList) {
         $hostname   = $urlInfo.Hostname
@@ -375,10 +398,14 @@ function Test-UrlConnectivity {
         $category   = $urlInfo.Category
         $region     = $urlInfo.Region
 
-        if ($category -eq "Flexera" -and $flexeraRegions.ContainsKey($region)) {
-            $flexeraRegions[$region].Total++
+        if ($category -eq "Prod" -and $prodRegions.ContainsKey($region)) {
+            $prodRegions[$region].Total++
+        } elseif ($category -eq "UAT" -and $uatRegions.ContainsKey($region)) {
+            $uatRegions[$region].Total++
         } elseif ($category -eq "Certificate") {
             $certificateStatus.Total++
+        } elseif ($category -eq "Monitoring") {
+            $monitoringStatus.Total++
         }
 
         $statusText = if ($isRequired) { "[REQUIRED]" } else { "[OPTIONAL]" }
@@ -393,10 +420,14 @@ function Test-UrlConnectivity {
             if ($tcpTest.TcpTestSucceeded) {
                 Write-Success "$target is reachable on port $port"
 
-                if ($category -eq "Flexera" -and $flexeraRegions.ContainsKey($region)) {
-                    $flexeraRegions[$region].Success++
+                if ($category -eq "Prod" -and $prodRegions.ContainsKey($region)) {
+                    $prodRegions[$region].Success++
+                } elseif ($category -eq "UAT" -and $uatRegions.ContainsKey($region)) {
+                    $uatRegions[$region].Success++
                 } elseif ($category -eq "Certificate") {
                     $certificateStatus.Success++
+                } elseif ($category -eq "Monitoring") {
+                    $monitoringStatus.Success++
                 }
             } else {
                 if ($isRequired) {
@@ -419,15 +450,14 @@ function Test-UrlConnectivity {
         }
     }
 
-    # Regional access summary
+    # ── Production regional summary ───────────────────────────────────────────
     Write-Host "`n----------------------------------------" -ForegroundColor Cyan
-    Write-Host "Regional Access Summary" -ForegroundColor Cyan
+    Write-Host "Production — Regional Access Summary" -ForegroundColor Cyan
     Write-Host "----------------------------------------" -ForegroundColor Cyan
 
     foreach ($region in @("US", "EU", "APAC")) {
-        $success = $flexeraRegions[$region].Success
-        $total   = $flexeraRegions[$region].Total
-
+        $success = $prodRegions[$region].Success
+        $total   = $prodRegions[$region].Total
         if ($success -gt 0) {
             Write-Success "$region Region: Working ($success of $total reachable)"
         } else {
@@ -435,7 +465,40 @@ function Test-UrlConnectivity {
         }
     }
 
-    Write-Host "`nCertificate / OCSP / CRL Access:" -ForegroundColor Yellow
+    # ── UAT regional summary ──────────────────────────────────────────────────
+    Write-Host "`n----------------------------------------" -ForegroundColor Cyan
+    Write-Host "UAT — Regional Access Summary" -ForegroundColor Cyan
+    Write-Host "----------------------------------------" -ForegroundColor Cyan
+
+    foreach ($region in @("US", "EU", "APAC")) {
+        $success = $uatRegions[$region].Success
+        $total   = $uatRegions[$region].Total
+        if ($success -gt 0) {
+            Write-Success "$region UAT: Working ($success of $total reachable)"
+        } elseif ($total -gt 0) {
+            Write-Warning "$region UAT: Not reachable (0 of $total) — optional"
+        }
+    }
+
+    # ── Monitoring summary ────────────────────────────────────────────────────
+    Write-Host "`n----------------------------------------" -ForegroundColor Cyan
+    Write-Host "Performance Monitoring Access" -ForegroundColor Cyan
+    Write-Host "----------------------------------------" -ForegroundColor Cyan
+
+    $monSuccess = $monitoringStatus.Success
+    $monTotal   = $monitoringStatus.Total
+
+    if ($monSuccess -eq $monTotal) {
+        Write-Success "Monitoring endpoints: All reachable ($monSuccess of $monTotal) — optional"
+    } else {
+        Write-Warning "Monitoring endpoints: $monSuccess of $monTotal reachable — optional"
+    }
+
+    # ── Certificate / OCSP / CRL summary ─────────────────────────────────────
+    Write-Host "`n----------------------------------------" -ForegroundColor Cyan
+    Write-Host "Certificate / OCSP / CRL Access" -ForegroundColor Cyan
+    Write-Host "----------------------------------------" -ForegroundColor Cyan
+
     $certSuccess = $certificateStatus.Success
     $certTotal   = $certificateStatus.Total
 
